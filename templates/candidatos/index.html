@@ -1,0 +1,250 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Candidatos</title>
+    {% include "_FRAGS/head.html" %}
+</head>
+
+<body>
+    {% include "_FRAGS/carga.html" %}
+    <script>
+        let votaciones = JSON.parse('{{votacionesjson|safe}}')
+    </script>
+    <style>
+        body {
+            display: flex;
+            align-items: center;
+            flex-direction: column;
+            text-align: center;
+            padding: 20px;
+        }
+
+        input[type=text] {
+            border: 1px solid lightgray;
+            text-align: left;
+            margin: 5px;
+            padding: 6px;
+        }
+
+        .table {
+            text-align: left;
+        }
+
+        select {
+            cursor: pointer;
+            padding: 6px;
+            margin: 4px;
+        }
+    </style>
+    <div>
+        {% if busqueda %}
+        <p class="lead">
+            Consulta: {{busqueda}}
+        </p>
+        {% endif %}
+        <a href="/" class="btn btn-dark" id="inicio-btn">
+            <i class="fas fa-arrow-alt-circle-left"></i> Inicio
+        </a>
+        <a href="#" class="btn btn-dark" onclick="crear()"><i class="fas fa-user-plus"></i> Nuevo</a>
+        <input type="text" class="btn" id="busqueda" onkeyup="enterBuscar(event)" style="width: 200px;" value="{{busqueda}}">
+        <a href="#" class="btn btn-dark" id="search"><i class="fas fa-search"></i> Buscar</a>
+        <script>
+            document.getElementById("inicio-btn").setAttribute(
+                "href",
+                getURLabsolute("")
+            )
+            function enterBuscar(key) {
+                if (key.key == "Enter") {
+                    buscar()
+                }
+            }
+            function generarLinkBusqueda() {
+                if (document.getElementById("busqueda").value) {
+                    document.getElementById("search").setAttribute(
+                        "href",
+                        getURLabsolute("candidato/buscar/" + document.getElementById("busqueda").value)
+                    )
+                }
+            }
+
+            function buscar() {
+                if (document.getElementById("busqueda").value) {
+                    openurl(getURLabsolute("candidato/buscar/" + document.getElementById("busqueda").value))
+                }
+            }
+        </script>
+    </div>
+    <br>
+    <table class="table table-light" style="width:90%;">
+        <thead class="thead-light">
+            <tr>
+                <th>ID</th>
+                <th>Nombre</th>
+                <th>Apellido</th>
+                <th>Tipo de documento</th>
+                <th>Partido</th>
+                <th>Localidad</th>
+                <th>Acciones</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for candidato in candidatos %}
+            <tr>
+                <td>{{candidato[0]}}</td>
+                <td>{{candidato[1]}}</td>
+                <td>{{candidato[2]}}</td>
+                <td>{{candidato[3]}}</td>
+                <td>{{candidato[4]}}</td>
+                <td>{{candidato[5]}}</td>
+                <td>
+                    <div class="btn-group" role="group">
+                        <a href="#" class="btn btn-warning" id="editar{{candidato[0]}}"
+                            onclick="editar('{{candidato[0]}}','{{candidato[1]}}','{{candidato[2]}}','{{candidato[3]}}','{{candidato[4]}}','{{candidato[5]}}')">
+                            <i class="fas fa-user-edit"></i> Editar
+                        </a>
+                        <a href="#" class="btn btn-danger" onclick="eliminar('{{candidato[0]}}')">
+                            <i class="fas fa-user-slash"></i> Borrar
+                        </a>
+                        <a href="#" class="btn btn-primary" id="votar{{candidato[0]}}">
+                            <i class="fas fa-vote-yea"></i> 
+                            <script>
+                                document.getElementById("votar{{candidato[0]}}").innerHTML='<i class="far fa-square"></i> Votar'
+                                for (const votacion of votaciones) {
+                                    if(votacion[0]=="{{candidato[0]}}"){
+                                        document.getElementById("votar{{candidato[0]}}").innerHTML='<i class="far fa-check-square"></i> Ha votado'
+                                        break
+                                    }
+                                }
+                            </script>
+                        </a>
+                    </div>
+                </td>
+            </tr>
+            <script>
+                document.getElementById("votar{{candidato[0]}}").setAttribute(
+                    "href",
+                    getURLabsolute("votacion/{{candidato[0]}}")
+                )
+            </script>
+            {% endfor %}
+        </tbody>
+    </table>
+
+    <script>
+        function editar(id, nombre, apellido, tipodoc, partido, localidad) {
+            swal.fire({
+                title: `Editar: ${id}`,
+                showCancelButton: true,
+                showConfirmButton: false,
+                showCloseButton: true,
+                html: `
+                <form action="${getURLabsolute("candidato/editado")}" id="editar" method="post" style="display:flex;flex-direction:column;" onsubmit="return validar()">
+                <input type="text" value="${id}" name="id" id="id" style="display:none" >
+                <input type="text" value="${nombre}" name="nombre" id="nombre" placeholder="Nombre">
+                <input type="text" value="${apellido}" name="apellido" id="apellido" placeholder="Apellido">
+                <div style="text-align:center">
+                    Tipo de documento
+                    <br>
+                    <select name="tipodoc" id="tipodoc" style="width:150px">
+                        <option ${tipodoc == "CC" ? "selected" : ""}>CC</option>
+                        <option ${tipodoc == "TI" ? "selected" : ""}>TI</option>
+                        <option ${tipodoc == "RC" ? "selected" : ""}>RC</option>
+                    </select>
+                </div>
+                <input type="text" value="${partido}" name="partido" id="partido" placeholder="Partido">
+                <input type="text" name="localidad" value="${localidad}" id="localidad" placeholder="Localidad">
+                <hr class="my-3">
+                <button type="submit" class="btn btn-primary">
+                    <i class="fas fa-save"></i> Guardar
+                </button>
+            </form>
+                `
+            })
+        }
+
+        async function eliminar(id) {
+            let response = await swal.fire({
+                title: `Eliminar usuario ${id}`,
+                showCancelButton: true,
+                showConfirmButton: true,
+                showCloseButton: true
+            })
+            if (response.isConfirmed) {
+                openurl("/candidato/eliminar/" + id, true)
+            }
+        }
+
+        function crear() {
+            swal.fire({
+                title: `Crear nuevo candidato`,
+                showCancelButton: false,
+                showConfirmButton: false,
+                showCloseButton: true,
+                html: `
+                <form action="${getURLabsolute("candidato/creado")}" style="display:flex;flex-direction:column;" method="post" enctype="multipart/form-data" name="myform" onsubmit="return validar2()">
+                    <input type="text" name="id" id="id" placeholder="ID">
+                    <input type="text" name="nombre" id="nombre" placeholder="Nombre">
+                    <input type="text" name="apellido" id="apellido" placeholder="Apellido">
+                    <div class="label">Tipo de documento:</div>
+                    <div style="text-align:center">
+                        <select name="tipodoc" style="width:150px">
+                            <option>CC</option>
+                            <option>TI</option>
+                            <option>RC</option>
+                        </select>
+                    </div>
+                    <input type="text" name="partido" id="partido" placeholder="Partido">
+                    <input type="text" name="localidad" id="localidad" placeholder="Localidad">
+                    <hr class="my-3">
+                    <div style="text-align:center">
+                        <div class="btn-group" role="group">
+                            <a href="#" onclick="Swal.close()" class="btn btn-danger"><i class="fas fa-times"></i> Cancelar</a>
+                            <input class="btn btn-primary" style="width: 100px;" type="submit" value='Crear'>
+                        </div>
+                    </div>
+                </form>
+                `,
+            })
+        }
+
+        function validar2() {
+            let names = ["id", "nombre", "apellido", "tipodoc", "genero", "localidad"]
+            for (const k of names) {
+                var x = document.forms["myform"][k].value;
+                if (!x) {
+                    Swal.showValidationMessage(
+                        `Rellena todos los campos`
+                    )
+                    return false;
+                }
+            }
+            return true;
+        }
+
+        function validar() {
+            if (!document.getElementById('nombre').value) {
+                Swal.showValidationMessage('El nombre no puede ser vacio')
+                return false
+            } else if (!document.getElementById('apellido').value) {
+                Swal.showValidationMessage('El apellido no puede ser vacio')
+                return false
+            } else if (!document.getElementById('tipodoc').value) {
+                Swal.showValidationMessage('El tipo de documento no puede ser vacio')
+                return false
+            } else if (!document.getElementById('genero').value) {
+                Swal.showValidationMessage('El genero no puede ser vacio')
+                return false
+            } else if (!document.getElementById('localidad').value) {
+                Swal.showValidationMessage('La localidad no puede ser vacia')
+                return false
+            } else {
+                return true
+            }
+        }
+    </script>
+</body>
+
+</html>

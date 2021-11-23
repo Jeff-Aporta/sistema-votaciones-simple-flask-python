@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@3.5.1/dist/chart.min.js"></script>
+    
+    {% include "_FRAGS/head.html" %}
+    
+</head>
+
+<body>
+    {% include "_FRAGS/carga.html" %}
+    <style>
+        body{
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+        }
+    </style>
+    <div class="jumbotron">
+    <a class="btn btn-dark" id="inicio">
+        <i class="fas fa-arrow-alt-circle-left"></i> Inicio
+    </a>
+    <br>
+    <br>
+    <div style="overflow-x: scroll;width: 700px;">
+        <canvas height="400" id="myChart" style="background: white;border: 1px solid black;"></canvas>
+    </div>
+    </div>
+    <script>
+        try {
+            document.getElementById("inicio").setAttribute(
+                "href",
+                getURLabsolute("/")
+            )
+        } catch (error) { }
+
+        let votos = JSON.parse('{{votosContados|safe}}')
+
+        function random(min, max) {
+            return Math.floor(Math.random() * (max - min) + min);
+        }
+
+        let colores = []
+        let bg_colores = []
+
+        document.getElementById("myChart").setAttribute(
+            "width",
+            votos.length * 130 + ""
+        )
+
+        let labels = []
+        let values = []
+        for (const voto of votos) {
+            labels.push(voto[0] + " | " + voto[1])
+            values.push(voto[2])
+            if (!colores[voto[1]]) {
+                colores[voto[1]] = `rgba(${random(0, 255)}, ${random(0, 255)}, ${random(0, 255)}, 0.2)`
+            }
+            console.log(colores[voto[1]])
+            bg_colores.push(colores[voto[1]])
+        }
+
+        const ctx = document.getElementById('myChart').getContext('2d');
+        const myChart = new Chart(ctx, {
+            type: 'bar',
+            data: {
+                labels: labels,
+                datasets: [{
+                    data: values,
+                    backgroundColor: bg_colores,
+                    borderColor: [
+                        'rgba(0, 0, 0, 0.2)'
+                    ],
+                    borderWidth: 1
+                }]
+            },
+            options: {
+                responsive: false,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        display: false
+                    }
+                },
+                scales: {
+                    y: {
+                        ticks: {
+                            stepSize: 5
+                        }
+                    }
+                }
+            }
+        });
+    </script>
+</body>
+
+</html>

@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <title>Votacion</title>
+    {% include "_FRAGS/head.html" %}
+</head>
+
+<body>
+    {% include "_FRAGS/carga.html" %}
+    <style>
+        body {
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+    </style>
+    <div class="jumbotron">
+        <table style="width: 100%;">
+            <tbody>
+                <tr>
+                    <td>
+                        <a class="btn btn-dark" id="inicio">
+                            <i class="fas fa-arrow-alt-circle-left"></i> Inicio
+                        </a>
+                    </td>
+                    <td style="text-align: right;">
+                        <p class="lead">{{votante[-1]}}</p>
+                    </td>
+                </tr>
+            </tbody>
+        </table>
+        <hr class="my-4">
+        <h1>
+            Hola!
+            <br>
+            {{votante[1] + " " + votante[2]}}
+        </h1>
+        <h3>
+            {{votante[3] + ": " + votante[0]}}
+        </h3>
+        {% if ha_votado %}
+        <h4>
+            Ya votaste
+        </h4>
+        {% else %}
+        <h4>
+            Puedes votar
+        </h4>
+        {% endif %}
+        <br>
+        <script>
+            let candidatos = []
+        </script>
+        {% if not ha_votado %}
+        <form id="myform" method="post">
+            <table cellpadding="10">
+                <tbody>
+                    {% for candidato in candidatos %}
+                    <script>
+                        candidatos.push("{{candidato[0]}}")
+                    </script>
+                    <tr>
+                        <td>
+                            <input type="radio" name="eleccion" id="eleccion{{candidato[0]}}" value="{{candidato[0]}}"
+                                style="width: 80px;height: 80px;" onchange="actualizarBotón()">
+                        </td>
+                        <td>
+                            <label for="eleccion{{candidato[0]}}">
+                                <h5>{{candidato[1]+" "+candidato[2]}}</h5>
+                                <h6>{{candidato[4]}}</h6>
+                                <p class="lead" style="font-size: 90%;">{{candidato[3]}}: {{candidato[0]}}</p>
+                            </label>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+            <hr class="my-3">
+            <script>
+                function actualizarBotón() {
+                    document.getElementById("btn-votacion").disabled = false;
+                }
+            </script>
+            <div style="text-align: center;">
+                <button class="btn btn-success" type="submit" id="btn-votacion" disabled="true">
+                    <i class="fas fa-vote-yea"></i> Realizar Votación
+                </button>
+                <div class="btn btn-info" id="voto-aleatorio" onclick="aleatorio()">
+                    <i class="fas fa-random"></i> Voto Aleatorio
+                </div>
+            </div>
+        </form>
+        {% endif %}
+    </div>
+    <script>
+        function aleatorio(){
+            document.getElementById("eleccion"+candidatos[Math.floor(Math.random()*candidatos.length)]).checked = true
+            document.getElementById("myform").submit()
+        }
+        try {
+            document.getElementById("inicio").setAttribute(
+                "href",
+                getURLabsolute("/")
+            )
+        } catch (error) { }
+        try {
+            document.getElementById("myform").setAttribute(
+                "action",
+                getURLabsolute("votacion/transaccion/{{votante[0]}}")
+            )
+        } catch (error) { }
+    </script>
+</body>
+
+</html>
